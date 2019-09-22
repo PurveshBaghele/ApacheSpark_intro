@@ -81,7 +81,7 @@ object Group10 {
                   .schema(schema)
                   .option("timestampFormat", "yyyyMMddhhmmss") 
                   .option("sep","\t")
-                  .csv("./data/segment/20150218230000.gkg.csv")
+                  .csv("./data/segment/*.csv")
                   .as[GData]
 	
     val sqlContext = new SQLContext(sc);
@@ -104,6 +104,9 @@ val urlCleaner = (s:String) => {
 val url_cleaner_udf = udf(urlCleaner)
 
 val splitCleaner = (s:String) => {
+     if (s == null) null else s.split(";").map(x=>(x.split(",")(0),1))
+}
+val splitCleaner = (s:String) => {
      if (s == null) null else s.split(",").map(word=> (word, 1))
 }
 val split_cleaner_udf = udf(splitCleaner)
@@ -114,6 +117,8 @@ val mapCleaner = (s: Array[String]) => {
 val map_cleaner_udf = udf(mapCleaner)
 
 val df = filter2.withColumn("AllNames", url_cleaner_udf(filter2("AllNames")) )
+val q1 = filter2.withColumn("AllNames", split_cleaner_udf(filter2("AllNames")) )
+val q2=q1.groupByKey(_._1).reduceGroups((x,y)=>(x._1, x._2 ++ y._2)).map(_._2).collect().map(t=>rowReducer(t._1, t._2, sc))
 // var q1 =df.select("AllNames").map(r => r.getString(0)).collect.toList
 // var s1=q1.mkString(" ")
 // val finalArray = s1.split(",")
@@ -122,6 +127,63 @@ val df = filter2.withColumn("AllNames", url_cleaner_udf(filter2("AllNames")) )
 // val reducedRDD = rdd.reduceByKey(_ + _)
 // val finalThing = reducedRDD.collect
 finalThing.sortBy{ case (x,y) => (-y) }
+
+
+//RDD implementation
+val grdd=sc.textFile("./data/segment/*.csv")
+val transform1=grdd.map(x=>x.split("\t")).filter(col=>col.size>23 && col(23)!="")
+val transform2= transform1.map(col=>(col(1).substring(0, 4)+"-"+col(1).substring(4, 6) +"-"+ col(1).substring(6, 8),col(23).split(";"))) //substring for date and split allNames
+val transform3=transform2.map(col=>(col._1,col._2.map(x=>x.split(",")(0))))
+                  .map(t=>(t._1,t.flatmap(w=>(t._2,1))      
+                                    .reduceByKey((x,y)=>x+y)))
+                                    .groupBy(t=>t._1)
+
+                                   
+val transform3=transform1.map(col=>col(23).split(";")).flatMap(x=>x.map(w=>(w.split(",")(0),1))).reduceByKey((x,y)=>x+y).sortBy(_._2,false)
+
+
+val transform2= transform1.map(col=>(col(1).substring(0, 4)+"-"+col(1).substring(4, 6) +"-"+ col(1).substring(6, 8),col(23).split(";")))
+                        .mapValues(t=>t.map(x=>(x.split(",")(0),1)))
+                        .reduceByKey((x,y)=>x ++ y)
+                        .map(x => {(x._1, x._2.groupBy(_._1).mapValues(_.map(_._2).sum).toArray.sortBy(t=>t._2).reverse.take(10))})
+                        
+  
+
+                          
+             
+
+   val transform2= transform1.map(col=>(col(1).substring(0, 4)+"-"+col(1).substring(4, 6) +"-"+ col(1).substring(6, 8),col(23).split(";"))).mapValues(x=>x.map(w=>(w.split(",")(0),1)))
+
+       val gdeltv4 = sc.textFile("./data/segment/*.csv") // Array[String] Reads all csv files inside the segment folder
+                  .map(s=>s.split("\t")) // Array[Array[String]]
+                  .filter(a=>a.size>23 && a(23)!="") // Array[Array[String]]
+                  .map(a=>(a(1).substring(0, 4)+"-" + a(1).substring(4, 6) + "-" + a(1).substring(6, 8), 
+                          a(23).split(";")))
+                  .map(t=>(t._1,t._2.map(tin=>tin.split(",")(0)).distinct))
+                  .flatMap(t=>t._2.map(w=>((t._1,w),1)))
+                  .reduceByKey((x,y)=>x+y)
+                  .groupBy(t=>t._1._1)
+                  .mapValues(t=>t.map(tin=>(tin._1._2,tin._2))
+                                 .toArray.sortBy(t=>t._2)
+                                 .reverse.take(10))
+                  .collect()
+/*val transform3=transform2.map(col=>(col._1,col._2.map(x=>x.split(",")(0)).distinct))
+                  .flatMap(t=>t._2.map(w=>((t._1,w),1)))
+                  .reduceByKey((x,y)=>x+y)
+                  .groupBy(t=>t._1._1)
+                  .mapValues(t=>t.map(tin=>(tin._1._2,tin._2))
+                                 .toArray.sortBy(t=>t._2)
+                                 .reverse.take(10))
+                  .collect()            */              
+/*
+val transform2= transform1.map(col=>(col(1).substring(0, 4)+"-"+col(1).substring(4, 6) +"-"+ col(1).substring(6, 8), //substring for date 
+                            col(23).split(";")// split AllNames 
+                            .map(x=>x.split(",")(0)) //remove the useless number beside it 
+                            .map(x=>(x, 1))))  // assign 1 to each topic
+                            .reduceByKey((x,y)=>x++y)
+                            .collect()
+*/                            
+val t1=grdd.map(s=>s.split("\t")).filter(a=>a.size>23 && a(23)!="")
    
     spark.stop()
   }
