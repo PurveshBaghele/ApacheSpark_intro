@@ -82,44 +82,47 @@ object Group10_DF{
 				val spark = SparkSession
 							.builder
 							.appName("Group10")
-							.config("spark.master", "local")
+							//.config("spark.master", "local")
 							.getOrCreate()
 				val sc = spark.sparkContext
 				import spark.implicits._
 
-				val t2 = System.nanoTime
+				//val t2 = System.nanoTime
 				val ds = spark.read 
 							  .schema(schema)
 							  .option("timestampFormat", "yyyyMMddhhmmss") 
 							  .option("sep","\t")
-							  .csv("./data/segment/*.csv")
+							  .csv(args(0))
 							  .as[GData]
-							  
+							  //./data/segment/20150218230000.gkg.csv
 
 				
-			val urlCleaner = (s:String) => {
-			   if (s == null) null else s.replaceAll(","," ").replaceAll("\\d+(?:[.,]\\d+)*\\s*", "")
-			}
+			// val urlCleaner = (s:String) => {
+			//    if (s == null) null else s.replaceAll(","," ").replaceAll("\\d+(?:[.,]\\d+)*\\s*", "")
+			// }
 
-			val url_cleaner_udf = udf(urlCleaner)
+			//val url_cleaner_udf = udf(urlCleaner)
             
 			val filter2=ds.select("Gdate","AllNames")  //select Gdate and AllNames
 			val a = filter2.withColumn("AllNames",split(col("AllNames"),";").cast("array<String>")) //split using semicolon
             val b = a.withColumn("AllNames",explode($"AllNames")) //explode AllNames
-            val c = b.withColumn("AllNames", url_cleaner_udf(b("AllNames"))) //using user defined function to remove the numbers
+			val c = b.withColumn("AllNames",split(col("AllNames"),",")(0)) 
+            //val c = b.withColumn("AllNames", url_cleaner_udf(b("AllNames"))) //using user defined function to remove the numbers
             val newDS = c.withColumn("Gdate", c("Gdate").cast(DateType)) // cast timestamp to date
             val counts = newDS.groupBy($"Gdate",$"AllNames").agg(count($"AllNames").as("count")) // count the topic occurence
 			
             counts.withColumn("rank", rank().over(Window.partitionBy("Gdate").orderBy($"count".desc))) //descending order
                 .filter($"rank" <= 10) // select top 10
-                .drop("rank").withColumn("NewColumn", struct(counts("AllNames"), counts("count")))// combine topic and count
+                .drop("rank").withColumn("NewColumn", struct(counts("AllNames").as("topic"), counts("count")))// combine topic and count
                 .select($"Gdate",$"NewColumn")
                 .groupBy($"Gdate").agg(collect_list($"NewColumn").as("AllNames"))
-                .rdd.map(_.toSeq.toList)
-                .foreach(println)
+                //.rdd.map(_.toSeq.toList)
+				//.coalesce(1)
+				.write.format("json").save(args(1))
+                //.saveAsTextFile(args(1))
 			
-            val duration2 = (System.nanoTime - t2) / 1e9d
-			println("rdd implementation execution time: "+duration2)
+           // val duration2 = (System.nanoTime - t2) / 1e9d
+			//println("rdd implementation execution time: "+duration2)
 				
 				
 			/*
@@ -133,7 +136,7 @@ object Group10_DF{
 							.json("E:\\supercomputigLab\\SBD-tudelft\\lab1\\data\\segment\\report.json")
 			*/			
 			
-			
+			spark.stop()
 		}
 	}
  

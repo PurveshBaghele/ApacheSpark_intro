@@ -52,7 +52,7 @@ val transform1=grdd.map(x=>x.split("\t")).filter(col=>col.size>23 && col(23)!=""
 //                           .map(x => {(x._1, x._2.groupBy(_._1).mapValues(_.map(_._2).sum).toArray.sortBy(t=>t._2).reverse.take(10))}) //count topics then sort and reverse
 //                           .collect().foreach(col=>println(col._1,col._2.mkString(" "))) //print the rdd
 
-val rdd2= transform1.map(col=>(col(1).substring(0, 4)+"-"+col(1).substring(4, 6) +"-"+ col(1).substring(6, 8),col(23).split(";")))// map date and AllNames
+val rdd2= transform1.map(col=>(col(1).substring(0, 4)+"-"+col(1).substring(4, 6) +"-"+ col(1).substring(6, 8),col(23).split(";"))) // map date and AllNames
                           .mapValues(t=>t.map(s=>(s.split(",")(0),1)))// split allNames with distinct and map (topics with 1)
                           .reduceByKey((x,y)=>x ++ y) //ReduceByKey on date
                           .map(x => {(x._1, x._2.groupBy(_._1).mapValues(_.map(_._2).sum).toArray.sortBy(t=>t._2).reverse.take(10))}) //count topics then sort and reverse
@@ -61,6 +61,27 @@ val rdd2= transform1.map(col=>(col(1).substring(0, 4)+"-"+col(1).substring(4, 6)
                           .saveAsTextFile(args(1)) //print the rdd
                           // .saveAsTextFile("s3://awsgroup10/newfile.txt")
                           //.saveAsTextFile("./data/newfile.txt")
+
+
+
+//  val gdeltv4 = sc.textFile(args(0)) // Array[String] Reads all csv files inside the segment folder
+//                   .map(s=>s.split("\t")) // Array[Array[String]]
+//                   .filter(a=>a.size>23 && a(23)!="") // Array[Array[String]]
+//                   .map(a=>(a(1).substring(0, 4)+"-" + a(1).substring(4, 6) + "-" + a(1).substring(6, 8), 
+//                           a(23).split(";")))
+//                   .map(t=>(t._1,t._2.map(tin=>tin.split(",")(0)).distinct))
+//                   .flatMap(t=>t._2.map(w=>((t._1,w),1)))
+//                   .reduceByKey((x,y)=>x+y)
+//                   .groupBy(t=>t._1._1)
+//                   .mapValues(t=>t.map(tin=>(tin._1._2,tin._2))
+//                                  .toArray.sortBy(t=>t._2)
+//                                  .reverse.take(10))
+//                   .map(col=>(col._1,col._2.mkString(" ")))
+//                   .coalesce(1)
+//                   .saveAsTextFile(args(1))               
+                  //.collect()
+                  // print RDD 
+                  // .foreach(t=>println(t._1,t._2.mkString(" ")))                         
 
 // val rdd2= transform1.map(col=>(col(1).slice(0,8),col(23).split(";")))// map date and AllNames
 //                           .mapValues(t=>t.map(s=>(s.split(",")(0),1)))// split allNames with distinct and map (topics with 1)
@@ -75,7 +96,7 @@ val rdd2= transform1.map(col=>(col(1).substring(0, 4)+"-"+col(1).substring(4, 6)
 // val duration2 = (System.nanoTime - t2) / 1e9d
 // println("rdd implementation execution time: "+duration2)
 
-//spark.stop()
+spark.stop()
     
   }
 }
