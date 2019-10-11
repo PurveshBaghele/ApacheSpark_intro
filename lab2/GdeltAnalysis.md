@@ -14,7 +14,7 @@ The above performance metrics was pretty easy to define. But is it really effect
 
 Following is a code snippet of our dataframe implementation from lab assignment-1 which we have used extensively for performance analysis (reason for selecting DF implementation discussed later) :
 
-
+###### code 
 ```
 val ds = spark.read
               .schema(schema)
@@ -45,8 +45,15 @@ counts.withColumn("rank", rank().over(Window.partitionBy("Gdate").orderBy($"coun
       .rdd.map(_.toSeq.toList)
       .foreach(println) 
 ```      
+### Before we start...
+As discussed in the feedback session for lab assignment-1, User Defined functions(UDF) kill the spark dataframe approach optimizations. Our code consisted a UDF for discarding the unwanted numbers in 'AllNames' column. Hence the changes that were made are: 
 
+```
+val c = b.withColumn("AllNames",split(col("AllNames"),",")(0)) 
+//removed the UDF
+//val c = b.withColumn("AllNames", url_cleaner_udf(b("AllNames"))) //using user defined function to remove the numbers
+```
 
+### Naive Start
 
-### Initial Run
 
