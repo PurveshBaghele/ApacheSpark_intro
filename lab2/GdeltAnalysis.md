@@ -46,7 +46,7 @@ counts.withColumn("rank", rank().over(Window.partitionBy("Gdate").orderBy($"coun
       .foreach(println) 
 ```      
 ### Before we start...
-As discussed in the feedback session for lab assignment-1, User Defined functions(UDF) kill the spark dataframe approach optimizations. Our code consisted a UDF for discarding the unwanted numbers in 'AllNames' column. Hence the changes that were made are: 
+As discussed in the feedback session for lab assignment-1, User Defined functions(UDF) kill the spark dataframe approach optimizations. Our [code](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/lab2/GdeltAnalysis.md#before-we-start) consisted a UDF for discarding the unwanted numbers in 'AllNames' column. Hence the changes that were made are: 
 
 ```
 val c = b.withColumn("AllNames",split(col("AllNames"),",")(0)) 
