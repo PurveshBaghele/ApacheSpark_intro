@@ -1,5 +1,9 @@
 # Supercomputing for Big Data : Group 10 :computer: :chart_with_upwards_trend:
 
+*Author 1: Pradyot Patil*
+
+*Author 2: Purvesh Baghele*
+
 Hello everyone! this blog post is a deliverable for assignment 2 of our course "Supercomputing for Big Data" at TU delft. The succeeding topics in this blog discuss about our spark application implementation and its performance analysis.
 
 ### Quick Recap 
@@ -46,7 +50,7 @@ counts.withColumn("rank", rank().over(Window.partitionBy("Gdate").orderBy($"coun
       .foreach(println) 
 ```      
 ### Before we start...
-As discussed in the feedback session for lab assignment-1, User Defined functions(UDF) kill the spark dataframe approach optimizations. Our [code](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/lab2/GdeltAnalysis.md#before-we-start) consisted a UDF for discarding the unwanted numbers in 'AllNames' column. Hence the changes that were made are: 
+As discussed in the feedback session for lab assignment-1, User Defined functions(UDF) kill the spark dataframe approach optimizations. Our [code](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/lab2/GdeltAnalysis.md#code) consisted a UDF for discarding the unwanted numbers in 'AllNames' column. Hence, we removed the UDF as follows: 
 
 ```
 val c = b.withColumn("AllNames",split(col("AllNames"),",")(0)) 
@@ -54,6 +58,23 @@ val c = b.withColumn("AllNames",split(col("AllNames"),",")(0))
 //val c = b.withColumn("AllNames", url_cleaner_udf(b("AllNames"))) //using user defined function to remove the numbers
 ```
 
-### Naive Start
+### Naive Start :hatching_chick:
 
+Before we run our spark application on the entire dataset, we wanted to filter down whether we should use our rdd or dataframe approach. We started with small number of instances of m4.large machines and then increased the instances gradually. We compared our RDD and DF implementation on m4.large machines.
+
+##### RDD vs DF
+
+
+
+
+
+
+
+
+### Minimum Requirement
+As mentioned in assignment manual the minimum requirement for assignment is to run the whole dataset on 20 instances of c4.8xlarge machines.
+
+
+
+###### Bottleneck
 
