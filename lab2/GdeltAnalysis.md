@@ -1,13 +1,11 @@
 # Supercomputing for Big Data : Group 10 :computer: :chart_with_upwards_trend:
 
-                                        * Pradyot Patil,Purvesh Baghele *
-                                                 
-                                           @pradyot-09      
-                                                 **TU Deflt**
+                                        Authors : Pradyot Patil, Purvesh Baghele
+                                                        (TU Delft)
 
 Hello everyone! this blog post is a deliverable for assignment 2 of our course "Supercomputing for Big Data" at TU delft. The succeeding topics in this blog discuss about our spark application implementation and its performance analysis.
 
-### Quick Recap 
+## Quick Recap 
 
 In Lab assignment 1 report we proposed to measure the performance by finding balance between cost and time.That is, we intend to do a cost vs time optimization. How do we do that? We plan to define a very simple metric as shown in the table below :
 
@@ -19,7 +17,7 @@ The cost of cluster considers both, the time taken by it and of machine being us
 
 Following is a code snippet of our dataframe implementation from lab assignment-1 which we have used extensively for performance analysis (reason for selecting DF implementation discussed later) :
 
-###### code 
+##### code 
 ```
 val ds = spark.read
               .schema(schema)
@@ -49,7 +47,7 @@ counts.withColumn("rank", rank().over(Window.partitionBy("Gdate").orderBy($"coun
       .groupBy($"Gdate").agg(collect_list($"NewColumn").as("AllNames"))
       .saveAsTextFile(args(1))
 ```      
-### Before we start...
+## Before we start...
 As discussed in the feedback session for lab assignment-1, User Defined functions(UDF) kill the spark dataframe approach optimizations. Our [code](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/lab2/GdeltAnalysis.md#code) consisted a UDF for discarding the unwanted numbers in 'AllNames' column. Hence, we removed the UDF as follows: 
 
 ```
@@ -58,11 +56,11 @@ val c = b.withColumn("AllNames",split(col("AllNames"),",")(0))
 //val c = b.withColumn("AllNames", url_cleaner_udf(b("AllNames"))) //using user defined function to remove the numbers
 ```
 
-### Naive Start :hatching_chick:
+## Naive Start :hatching_chick:
 
 Before we run our spark application on the entire dataset, we wanted to filter down whether we should use our rdd or dataframe approach. Since it won't be viable to run each cluster configuration on both the implementation. We started with small number of instances of m4.large machines and then increased the instances gradually. We compared our RDD and DF implementation on m4.large machine.
 
-##### RDD vs DF
+#### RDD vs DF
 
 | RDD vs DF Comparison | 
 | -------------------- | 
@@ -72,18 +70,18 @@ Before we run our spark application on the entire dataset, we wanted to filter d
 
 The difference in execution time between RDD and Dataframe approach was 16 seconds for 864 segments which increased upto 56 seconds for 2974 segments. This difference seems trivial for now but when the application scales up to run all the segments of the dataset, this difference will become huge. Also as stated by us in lab assignment-1, we expected the Dataframe approach to be faster as it is compiled into execution plan and then executed. Therefore, spark can optimize the execution plan to reduce execution time.To still bolster our assumption we ran both our approaches on m4.large machines with 21 instances on whole dataset(4.1TB). The time difference between the two implementation was 8 minutes (78 minutes for DF; 86 minutes for RDD).
 
-### Minimum Requirement
+## Minimum Requirement
 As mentioned in assignment manual the minimum requirement for assignment is to run the whole dataset on 20 instances of c4.8xlarge machines.
 In this section we present the performance of our implementation on 20 instances of c4.8xlarge machines.
 
 ![Too much talk](https://github.com/pradyot-09/Big_Data_images/blob/master/images/trump_meme.gif)
 
-##### Lets Start....
+#### Lets Start....
 Since it was our first go, We slowly scaled the number of segments and machines. Then the two rookie authors of this blog thought they were ready to face the test and took the bold step of trying out the whole dataset on 20 c4.8xlarge core nodes.  Obviously we met our doom.
 
 ![Executor Memory Error](https://github.com/pradyot-09/Big_Data_images/blob/master/images/c4.8x%205%20errors/2019-10-12%20(1).png)
 
-##### Bottleneck-1 : executor memory
+#### Bottleneck-1 : executor memory
 The executors in the cluster were running out of memory. So we increased the executor and driver memory in the spark configuration. The new configuration were : ` --executor-memory 3g` and `--driver-memory 3g`. We increased the memory by 1gb starting from 1gb and it worked for 3gb :man_shrugging:.
 
 | Performance          | 
@@ -102,7 +100,7 @@ Average core node CPU usage   |  Average cluster CPU usage
 
 The task completed in 7 minutes approximately(including file writing task).But the Average core node CPU and cluster CPU usage were just above 30% :frowning_face:. After the naive run, we thought if we can improve the performance by tweaking the spark configuration :thought_balloon: ? 
 
-### Let's dive into spark configuration
+## Let's dive into spark configuration
 In the naive implementation we naively set executor memory to 3gb without any basis. In this section we explain how we got the best(according to us) performance from the cluster by tweaking spark configuration. The AWS [blog](https://aws.amazon.com/blogs/big-data/best-practices-for-successfully-managing-memory-for-apache-spark-applications-on-amazon-emr/) helped us in configuring spark.
 
 We ran multiple experiments on whole dataset with 5 instances of C4.8xlarge machines to find the right amount of `spark.executor.cores` as shown table below :
@@ -141,7 +139,7 @@ spark.yarn.executor.memoryOverhead = 6 * 0.1 = 0.6
 ```
 Hence the executor.memoryOverhead is 600MB approximately. Also, we set the driver.memory equal to  executor.memory . We would be using this spark configuration in all future task runs. Now we have figured out the spark configuration and ready to test our fastest implementation :rocket: .
 
-### Talk About Speed
+## Talk About Speed
 In this section we show off the performance of our DF implementation on 20 c4.8xlarge core nodes. We set the spark configuration as discussed in the above section (executor.cores=4 & executor.memory=6g). 
 
 | Performance : c4.8xlarge (20 instances)| 
@@ -161,10 +159,10 @@ In this section we show off the performance of our DF implementation on 20 c4.8x
 
 Voila!! the new cluster configuration completed the task in 5.5 minutes. Also, the average CPU usage is approximately 60% which is almost double as compared to our previous naive run. But can we do even better in terms of CPU utilization? 
 
-##### Bottleneck-2 : CPU utilization
+#### Bottleneck-2 : CPU utilization
 After tweaking the spark configurations we were able to reach 60% CPU utilization on c4.8xlarge machines. 60% CPU utilization is good but not great. Can we reach 80%-90% CPU utilization? May be we can try the same spark configuration on different machines to find a cluster configuration which would be suitable for the problem and also ranks good based on our performance metrics.
 
-### Comparison
+## Comparison
 In this section we compare the performance of different cluster configuration to find the best match for the problem. For memory-intensive applications, R type instances are preferred over the other instance types. Hence we included R machines in our comparison. Obviously, it won't be viable to run the task on possible on all machines (TA's would kill us). We decided to run the task on machines similar in specification(vCores,RAM) to c4.8xlarge and also tried to alter the number of instances. We used the following combination of machines and instances :
  
  
@@ -189,7 +187,7 @@ Based on above table we can plot a graph to compare these clusters.
 
 [image9]: https://github.com/pradyot-09/Big_Data_images/blob/master/images/costVsTime.PNG "Cost vs Time tradeoff"
 
-### Results
+## Results
 Based on the comparison discussed in the comparison section the winner is r4.4xlarge with 20 instances followed by c4.8xlarge with 10 instances. Let's have look at the performance of r4.4xlarge machine :
 
 | r4.4xlarge Performance | 
@@ -220,7 +218,7 @@ Aren't those images satisfying :heart_eyes:? With r4.4xlarge machines we were ab
 Although the performance metrics defined by us does not account for many factors such as efficient memory usage, network usage etc. But it definitely gives us an approximation about the most suitable machine for a problem.
 
 
-### Acknowledgement
+## Acknowledgement
 
 We would like to express our sincere gratitude to the teaching assistants Robin Hes, Matthijs Brobbel, and Dorus Leliveld for providing guidance, comments and suggestions (including quick replies to *redundant* emails even on the weekends) throughout this lab without getting frustrated from our persistent and extremely naive questions. We would also like to thank them for providing access to the IAM accounts so that we could test our approaches flawlessly without getting into the hassle of contacting aws support again and again.
 
