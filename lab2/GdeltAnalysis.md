@@ -104,7 +104,7 @@ The task completed in 7 minutes approximately(including file writing task).But t
 ### Let's dive into spark configuration
 In the naive implementation we naively set executor memory to 3gb without any basis. In this section we explain how we got the best(according to us) performance from the cluster by tweaking spark configuration. The AWS [blog](https://aws.amazon.com/blogs/big-data/best-practices-for-successfully-managing-memory-for-apache-spark-applications-on-amazon-emr/) helped us in configuring spark.
 
-We ran multiple experiments on whole dataset 5 with instances of C4.8xlarge machines to find the right amount of `spark.executor.cores` as shown table below :
+We ran multiple experiments on whole dataset with 5 instances of C4.8xlarge machines to find the right amount of `spark.executor.cores` as shown table below :
 
 | executor.cores | executor.memory         | time taken to complete the task (Approx.) | Average CPU Utilization (Approx.)|
 | -------------- | ----------------------- | ----------------------------------------- | -------------------------------- | 
