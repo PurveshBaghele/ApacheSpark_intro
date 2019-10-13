@@ -70,23 +70,25 @@ The difference in execution time between RDD and Dataframe approach was 16 secon
 As mentioned in assignment manual the minimum requirement for assignment is to run the whole dataset on 20 instances of c4.8xlarge machines.
 In this section we present the performance of our implementation on 20 instances of c4.8xlarge machines (excluding 1 master node).
 
-![Too much talk](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/images/trump_meme.gif)
+![Too much talk](https://github.com/pradyot-09/Big_Data_images/blob/master/images/trump_meme.gif)
 
 ##### Lets Start....
 Since it was our first go, We slowly scaled the number of segments and machines. Then the two rookie authors of this blog thought they were ready to face the test and took the bold step of trying out the whole dataset on 20 c4.8xlarge core nodes.  Obviously we met our doom.
 
-![Executor Memory Error](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/images/c4.8x%205%20errors/2019-10-12%20(1).png)
+![Executor Memory Error](https://github.com/pradyot-09/Big_Data_images/blob/master/images/c4.8x%205%20errors/2019-10-12%20(1).png)
 
 ##### Bottleneck-1 : executor memory
 The executors in the cluster were running out of memory. So we increased the executor and driver memory in the spark configuration. The new configuration were : ` --executor-memory 3g` and `--driver-memory 3g`. We increased the memory by 1gb starting from 1gb and it worked for 3gb :man_shrugging:.
 
-![c4.8xlarge performance](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/images/c4.8x%2020%20success/c4.8xlarge_naive.png) 
+![c4.8xlarge performance](https://github.com/pradyot-09/Big_Data_images/blob/master/images/c4.8x%2020%20success/c4.8xlarge_naive.png) 
 
-Average core node  CPU usage just above 30% :frowning_face: :
-![core node CPU usage](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/images/c4.8x%2020%20success/performance.png)
 
-Same case with cluster CPU usage :
-![cluster node CPU usage](https://github.com/pradyot-09/ApacheSpark_intro/blob/master/images/c4.8x%2020%20success/cluster_usage.png)
+Average core node  CPU usage just above 30% :frowning_face:  |  Same case with cluster CPU usage 
+:-----------------------------------------------------------:|:-----------------------------------:
+![alt text][image3]                                          |  ![alt text][image4]
+
+[image3]: https://github.com/pradyot-09/Big_Data_images/blob/master/images/c4.8x%2020%20success/performance.png "core node CPU usage"
+[image4]: https://github.com/pradyot-09/Big_Data_images/blob/master/images/c4.8x%2020%20success/cluster_usage.png "cluster node CPU usage"
 
 After the naive run, we thought if we can improve the performance by tweaking the spark configuration :thought_balloon: ? 
 
