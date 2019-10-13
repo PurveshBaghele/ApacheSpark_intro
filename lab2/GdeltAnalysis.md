@@ -73,7 +73,7 @@ The difference in execution time between RDD and Dataframe approach was 16 secon
 
 ### Minimum Requirement
 As mentioned in assignment manual the minimum requirement for assignment is to run the whole dataset on 20 instances of c4.8xlarge machines.
-In this section we present the performance of our implementation on 20 instances of c4.8xlarge machines (excluding 1 master node).
+In this section we present the performance of our implementation on 20 instances of c4.8xlarge machines.
 
 ![Too much talk](https://github.com/pradyot-09/Big_Data_images/blob/master/images/trump_meme.gif)
 
@@ -141,11 +141,11 @@ spark.yarn.executor.memoryOverhead = 6 * 0.1 = 0.6
 Hence the executor.memoryOverhead is 600MB approximately. Also, we set the driver.memory equal to  executor.memory . We would be using this spark configuration in all future task runs.Now we have figured out the spark configuration and ready to test our fastest implementation :rocket: .
 
 ### Talk About Speed
-In this section we show off the performance of our DF implemetation on 20 c4.8xlarge core nodes and 1 master node. We set the spark configuration as discussed in the above section (executor.cores=4 & executor.memory=6g). 
+In this section we show off the performance of our DF implemetation on 20 c4.8xlarge core nodes. We set the spark configuration as discussed in the above section (executor.cores=4 & executor.memory=6g). 
 
-| Performance          | 
-| -------------------- | 
-| ![alt text][image6]  |
+| Performance : c4.8xlarge (20 instances)| 
+| -------------------------------------- | 
+| ![alt text][image6]                    |
 
 [image6]: https://github.com/pradyot-09/Big_Data_images/blob/master/images/c420%20faster/performance.png "c4.8xlarge performance" 
 
@@ -167,22 +167,29 @@ After tweaking the spark configurations we were able to reach 60% CPU utilizatio
 In this section we compare the performance of different cluster configuration to find the best match for the problem. For memory-intensive applications, R type instances are prefered over the other instance types. Hence we included R machines in our comparison. Obviously, it won't be viable to run the task on possible on all machines (TA's would kill us). We decided to run the task on machines similar in specification(vCores,RAM) to c4.8xlarge and also tried to alter the number of instances. We used the following combination of machines and instances :
  
  
-| Machine_Type   | Cost per hour ($)       |  Number of Instances
-| -------------- | ----------------------- | ---------------------
-| c4.8xlarge     |         0.297           | 5           
-| c4.8xlarge     |         0.297           | 10           
-| c4.8xlarge     |         0.297           | 20                  
-| c4.4xlarge     |         0.200           | 20                  
-| m4.large       |         0.020           | 20                  
-| r4.4xlarge     |         0.166           | 20
-| r4.8xlarge     |         0.319           | 20
+| Machine_Type   | Cost per hour ($)       |  Number of Instances | time taken to complete the task (in minutes)| Cost of cluster |
+| -------------- | ----------------------- | -------------------- | ------------------------------------------- | --------------- |
+| c4.8xlarge     |         0.297           | 5                    |  21                                         |  0.519
+| c4.8xlarge     |         0.297           | 10                   |  10.25                                      |  0.504
+| c4.8xlarge     |         0.297           | 20                   |  5.55                                       |  0.546         
+| c4.4xlarge     |         0.200           | 20                   |  8.55                                       |  0.568     
+| m4.large       |         0.020           | 20                   |  78                                         |  0.520     
+| r4.4xlarge     |         0.166           | 20                   |  8.9                                        |  0.491
+| r4.8xlarge     |         0.319           | 20                   |  5.6                                        |  0.593
 
 * NOTE: The machine rates used in this blog correspond to the price of spot instances as on 13/10/2019. *
 
+Based on above table we can plot a graph to compare these clusters.
+
+
+| Cost vs Time Tradeoff                  | 
+| -------------------------------------- | 
+| ![alt text][image9]                    |
+
+[image9]: https://github.com/pradyot-09/Big_Data_images/blob/master/images/costVsTime.PNG "Cost vs Time tradeoff"
 
 ### Results
-Based on the comparison discussed comparison section the winner is r4.4xlarge with 20 instances followed by c4.8xlarge with 10 instances. Let's have look at the performance of r4.4xlarge machine :
-
+Based on the comparison discussed in the comparison section the winner is r4.4xlarge with 20 instances followed by c4.8xlarge with 10 instances. Let's have look at the performance of r4.4xlarge machine :
 
 | r4.4xlarge Performance | 
 | ---------------------- | 
@@ -209,7 +216,7 @@ Based on the comparison discussed comparison section the winner is r4.4xlarge wi
 
 Aren't those images satisfying :heart_eyes:? With r4.4xlarge machines we were able to reach **85%** average cluster CPU usage(approx.) and **90%** core node CPU usage(approx.). The task was completed in 8.9 minutes using 20 instances. According to our defined performance metrics this machine gives the best balance between cost and time. 
 
-Although the performance metrics defined by us does not account for many factors such as effiecient memory usage, network usage ecectra. But it definitely gives us an approximation about the most suitable machine for a probmlem.
+Although the performance metrics defined by us does not account for many factors such as effiecient memory usage, network usage ecectra. But it definitely gives us an approximation about the most suitable machine for a problem.
 
 
 ### Acknowledgement
