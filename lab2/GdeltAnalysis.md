@@ -8,13 +8,13 @@ Hello everyone! this blog post is a deliverable for assignment 2 of our course "
 
 ### Quick Recap 
 
-In Lab assignment 1 report we proposed to measure the performance by finding balance between cost and time.That is, we intend to do a cost vs time optimization. How do we do that? We plan to define a very simple metrics as shown in the table below :
+In Lab assignment 1 report we proposed to measure the performance by finding balance between cost and time.That is, we intend to do a cost vs time optimization. How do we do that? We plan to define a very simple metric as shown in the table below :
 
 | Machine Type  | Cost of a machine/ hour | Number of instances  | time taken to complete the task | Cost of cluster|
 | ------------- | ----------------------- | -------------------- | ------------------------------- | -------------- |
 | Machine_Type  |         $/hr (x)        | no_of_instances (y)  |            z_hours (z)          |   x.y.z        |
 
-The cost of cluster considers both, the time taken by it and of machine bieng used. The goal is to get a cluster which does justice to time and cost both. The above performance metrics was pretty easy to define. But is it really effective :confused:?  We will find that out later in this blog :smile:
+The cost of cluster considers both, the time taken by it and of machine being used. The goal is to get a cluster which does justice to time and cost both. The above performance metrics was pretty easy to define. But is it really effective :confused:?  We will find that out later in this blog :smile:
 
 Following is a code snippet of our dataframe implementation from lab assignment-1 which we have used extensively for performance analysis (reason for selecting DF implementation discussed later) :
 
@@ -67,9 +67,9 @@ Before we run our spark application on the entire dataset, we wanted to filter d
 | -------------------- | 
 | ![alt text][image1]  |
 
-[image1]: https://github.com/pradyot-09/Big_Data_images/blob/master/images/RDD%20vs%20DF/rddVsDfNew.PNG "RDD vs DF" 
+[image1]: https://github.com/pradyot-09/Big_Data_images/blob/master/images/RDD%20vs%20DF/rddVsDF.png "RDD vs DF" 
 
-The difference in execution time between RDD and Dataframe approach was 16 seconds for 864 segments which increased upto 56 seconds for 2974 segments. This difference seems trivial for now but when the application scales up to run all the segments of the dataset, this difference will become huge. Also as stated by us in lab assignment-1, we expected the Dataframe approach to be faster as it is compiled into execution plan and then executed. Therefore, spark can optimize the execution plan to reduce execution time.To still bolster our assumption we ran both our approaches on m4.large machines with 21 instances on whole dataset(4.1TB).
+The difference in execution time between RDD and Dataframe approach was 16 seconds for 864 segments which increased upto 56 seconds for 2974 segments. This difference seems trivial for now but when the application scales up to run all the segments of the dataset, this difference will become huge. Also as stated by us in lab assignment-1, we expected the Dataframe approach to be faster as it is compiled into execution plan and then executed. Therefore, spark can optimize the execution plan to reduce execution time.To still bolster our assumption we ran both our approaches on m4.large machines with 21 instances on whole dataset(4.1TB). The time difference between the two implementation was 8 minutes (78 minutes for DF; 86 minutes for RDD).
 
 ### Minimum Requirement
 As mentioned in assignment manual the minimum requirement for assignment is to run the whole dataset on 20 instances of c4.8xlarge machines.
@@ -120,7 +120,7 @@ C4.8xlarge machine has **36vCores** and **60GB** memory.
 
 We first calculated the number of executors per instance:
 ```
-Number of executors per instance = (total number of virtual cores per instance - 1)/ spark.executors.cores
+Number of executors per instance = (total number of virtual cores per instance - 1)/ spark.executor.cores
 
 Number of executors per instance = (36 - 1)/ 4 = 35 / 4 = 9 (rounded up)
 //Subtracted one virtual core from the total number of virtual cores to reserve it for the Hadoop daemons.
@@ -138,10 +138,10 @@ The total executor memory includes the executor memory and overhead (spark.yarn.
 spark.yarn.executor.memoryOverhead = total executor memory * 0.10
 spark.yarn.executor.memoryOverhead = 6 * 0.1 = 0.6 
 ```
-Hence the executor.memoryOverhead is 600MB approximately. Also, we set the driver.memory equal to  executor.memory . We would be using this spark configuration in all future task runs.Now we have figured out the spark configuration and ready to test our fastest implementation :rocket: .
+Hence the executor.memoryOverhead is 600MB approximately. Also, we set the driver.memory equal to  executor.memory . We would be using this spark configuration in all future task runs. Now we have figured out the spark configuration and ready to test our fastest implementation :rocket: .
 
 ### Talk About Speed
-In this section we show off the performance of our DF implemetation on 20 c4.8xlarge core nodes. We set the spark configuration as discussed in the above section (executor.cores=4 & executor.memory=6g). 
+In this section we show off the performance of our DF implementation on 20 c4.8xlarge core nodes. We set the spark configuration as discussed in the above section (executor.cores=4 & executor.memory=6g). 
 
 | Performance : c4.8xlarge (20 instances)| 
 | -------------------------------------- | 
@@ -163,8 +163,8 @@ Voila!! the new cluster configuration completed the task in 5.5 minutes. Also, t
 ##### Bottleneck-2 : CPU utilization
 After tweaking the spark configurations we were able to reach 60% CPU utilization on c4.8xlarge machines. 60% CPU utilization is good but not great. Can we reach 80%-90% CPU utilization? May be we can try the same spark configuration on different machines to find a cluster configuration which would be suitable for the problem and also ranks good based on our performance metrics.
 
-### Comaprison
-In this section we compare the performance of different cluster configuration to find the best match for the problem. For memory-intensive applications, R type instances are prefered over the other instance types. Hence we included R machines in our comparison. Obviously, it won't be viable to run the task on possible on all machines (TA's would kill us). We decided to run the task on machines similar in specification(vCores,RAM) to c4.8xlarge and also tried to alter the number of instances. We used the following combination of machines and instances :
+### Comparison
+In this section we compare the performance of different cluster configuration to find the best match for the problem. For memory-intensive applications, R type instances are preferred over the other instance types. Hence we included R machines in our comparison. Obviously, it won't be viable to run the task on possible on all machines (TA's would kill us). We decided to run the task on machines similar in specification(vCores,RAM) to c4.8xlarge and also tried to alter the number of instances. We used the following combination of machines and instances :
  
  
 | Machine_Type   | Cost per hour ($)       |  Number of Instances | time taken to complete the task (in minutes)| Cost of cluster |
@@ -182,7 +182,7 @@ In this section we compare the performance of different cluster configuration to
 Based on above table we can plot a graph to compare these clusters.
 
 
-| Cost vs Time Tradeoff                  | 
+| Cost vs Time Trade-off                  | 
 | -------------------------------------- | 
 | ![alt text][image9]                    |
 
@@ -216,7 +216,7 @@ Based on the comparison discussed in the comparison section the winner is r4.4xl
 
 Aren't those images satisfying :heart_eyes:? With r4.4xlarge machines we were able to reach **85%** average cluster CPU usage(approx.) and **90%** core node CPU usage(approx.). The task was completed in 8.9 minutes using 20 instances. According to our defined performance metrics this machine gives the best balance between cost and time. 
 
-Although the performance metrics defined by us does not account for many factors such as effiecient memory usage, network usage ecectra. But it definitely gives us an approximation about the most suitable machine for a problem.
+Although the performance metrics defined by us does not account for many factors such as efficient memory usage, network usage etc. But it definitely gives us an approximation about the most suitable machine for a problem.
 
 
 ### Acknowledgement
