@@ -1,8 +1,9 @@
 # Supercomputing for Big Data : Group 10 :computer: :chart_with_upwards_trend:
 
-*Author 1: Pradyot Patil*
-
-*Author 2: Purvesh Baghele*
+                                        * Pradyot Patil,Purvesh Baghele *
+                                                 
+                                           @pradyot-09      
+                                                 **TU Deflt**
 
 Hello everyone! this blog post is a deliverable for assignment 2 of our course "Supercomputing for Big Data" at TU delft. The succeeding topics in this blog discuss about our spark application implementation and its performance analysis.
 
