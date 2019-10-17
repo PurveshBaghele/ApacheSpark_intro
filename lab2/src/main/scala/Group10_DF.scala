@@ -14,6 +14,10 @@ import org.apache.spark.sql.functions._
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions.{rank, desc}
 
+
+
+//SBT command : docker run -it --rm -v "`pwd`":/root hseeberger/scala-sbt sbt -J-XX:MaxMetaspaceSize=700m
+
 object Group10_DF{
 	case class GData ( 
 				GKGRECORDID: String, 
@@ -82,7 +86,7 @@ object Group10_DF{
 				val spark = SparkSession
 							.builder
 							.appName("Group10")
-							//.config("spark.master", "local")
+							.config("spark.master", "local") //comment for running on cluster
 							.getOrCreate()
 				val sc = spark.sparkContext
 				import spark.implicits._
