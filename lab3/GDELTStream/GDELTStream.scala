@@ -3,13 +3,14 @@ package lab3
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import org.apache.kafka.streams.kstream.{Transformer,TransformerSupplier}
+
 import org.apache.kafka.streams.processor._
 import org.apache.kafka.streams.scala.ImplicitConversions._
 import org.apache.kafka.streams.scala._
 import org.apache.kafka.streams.scala.kstream._
 import org.apache.kafka.streams.{KafkaStreams, StreamsConfig}
 import scala.collection.JavaConversions._
+import org.apache.kafka.streams.kstream.{Transformer,TransformerSupplier}
 
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.KeyValue
@@ -38,16 +39,16 @@ object GDELTStream extends App {
   // write the result to a new topic called gdelt-histogram.
   val records: KStream[String, String] = builder.stream[String, String]("gdelt")
 
-val topic:KStream[String, String] = records.map((k,s)=> (k,s.split("\t"))) //[String, Array[String]]
-                                                .filter((_,a)=>a.size>23 && a(23)!="") // [String, Array[String]]
-                                                .map((k,a)=>(k, a(23).split(";").map(x=>x.split(",")(0))
-                                                                                .distinct
-                                                                                .mkString(","))) //[String, String]
-                                                .flatMapValues(value => value.toLowerCase.split(",")) //[String, String]
+val topic:KStream[String, String] = records.map((date,str)=> (date,str.split("\t"))) 
+                                                .filter((date,col)=>col.size>23 && col(23)!="") //get allNames column
+                                                .map((date,str)=>(date, str(23).split(";")
+																			   .map(s=>s.split(",")(0)).distinct //get the topic
+                                                                               .mkString(","))) 
+                                                .flatMapValues(topic => topic.toLowerCase.split(",")) 
 
  //Print filtered topics to console
  val sysout = Printed.toSysOut[String, String].withLabel("allNames")
-//topic.print(sysout)
+topic.print(sysout)
   
 
   // Publish to topic allNames
@@ -72,7 +73,7 @@ val topic:KStream[String, String] = records.map((k,s)=> (k,s.split("\t"))) //[St
 
 //print outputStream to console for debugging
 val sysprint = Printed.toSysOut[String, Long].withLabel("gdelt-hist")
-outputStream.print(sysprint)
+//outputStream.print(sysprint)
 
   val streams: KafkaStreams = new KafkaStreams(builder.build(), props)
   streams.cleanUp()
@@ -112,39 +113,48 @@ def get(): Transformer[String, String, KeyValue[String, Long]] = {
 		  // Should return the current count of the name during the _last_ hour
 		  def transform(key: String, name: String): KeyValue[String, Long] = {
 		    
-		    val count = incrementTopicCount(name) // Increment the topic count
-		    //schedule a cron_job to decrement topic count after 1 hour
+		    val count = TopicCount_increment(name) // Increment the topic count
+		    
+			//schedule a cron_job to decrement topic count after 1 hour
 			var cron_job: Cancellable = null
-		    cron_job = this.context.schedule(1000 * 60 * 5, PunctuationType.WALL_CLOCK_TIME, (timestamp) => {
-		      			decrementTopicCount(name) // Decrement the topic count after 1 hour
+		    cron_job = this.context.schedule(1000 * 60 * 60, PunctuationType.WALL_CLOCK_TIME, (timestamp) => {
+		      			TopicCount_decrement(name) // Decrement the topic count after 1 hour
 		      			cron_job.cancel() // decremenmt once
 		    			});
 		    
 			return new KeyValue(name,count)
 		  }
 
-		  def incrementTopicCount(topic: String): Long = {
-		    var topic_cnt = this.topicStore.get(topic)
-		    if (topic_cnt != null) {
+		  
+		//decrement topic count after 1 hour
+		  def TopicCount_decrement(topic: String) = {
+			var count = this.topicStore.get(topic)
+		   if (count!=null) {
+		      count = count - 1
+			  if (count > 0) {
+		      	this.topicStore.put(topic, count)
+		    	}
+		      else{
+				  this.topicStore.delete(topic)
+			  }
+		   }else{
+			   count= 0
+			   this.topicStore.delete(topic)
+		   }
+			  this.context.forward(topic, count)
+		  }
+
+		//increment topic count
+		  def TopicCount_increment(topic: String): Long = {
+			
+			var topic_cnt = this.topicStore.get(topic)
+		    if (topic_cnt>0) {
 		      topic_cnt = topic_cnt + 1
 		    } else {
 		      topic_cnt = 1L
 		    }
-		    this.topicStore.put(topic, topic_cnt/10)
+		    this.topicStore.put(topic, topic_cnt)
 		    return topic_cnt
-		  }
-
-		  def decrementTopicCount(topic: String) = {
-		    var count = this.topicStore.get(topic)
-		    if ( count == 1) {
-		      count = 0
-		      this.topicStore.delete(topic)
-		    } else {
-		    	count = count - 1
-		    	this.topicStore.put(topic, count/10)
-			}
-		    this.context.forward(topic, count)
-		    
 		  }
 
 		  // Close any resources if any
