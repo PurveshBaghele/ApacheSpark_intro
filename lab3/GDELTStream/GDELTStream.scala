@@ -48,7 +48,7 @@ val topic:KStream[String, String] = records.map((date,str)=> (date,str.split("\t
 
  //Print filtered topics to console
  val sysout = Printed.toSysOut[String, String].withLabel("allNames")
-topic.print(sysout)
+//topic.print(sysout)
   
 
   // Publish to topic allNames
@@ -73,7 +73,7 @@ topic.print(sysout)
 
 //print outputStream to console for debugging
 val sysprint = Printed.toSysOut[String, Long].withLabel("gdelt-hist")
-//outputStream.print(sysprint)
+outputStream.print(sysprint)
 
   val streams: KafkaStreams = new KafkaStreams(builder.build(), props)
   streams.cleanUp()
