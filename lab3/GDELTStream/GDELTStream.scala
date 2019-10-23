@@ -101,8 +101,10 @@ def get(): Transformer[String, String, KeyValue[String, Long]] = {
 	
 	return new Transformer[String, String, KeyValue[String, Long]](){ 
 		var context: ProcessorContext = _
-		  var topicStore: KeyValueStore[String, Long] = _
-		  
+		var topicStore: KeyValueStore[String, Long] = _
+		val t2 = System.nanoTime 
+		var total_len=0 
+
 		  // Initialize Transformer object
 		  def init(context: ProcessorContext) {
 		    this.context = context
@@ -115,6 +117,11 @@ def get(): Transformer[String, String, KeyValue[String, Long]] = {
 		    
 		    val count = TopicCount_increment(name) // Increment the topic count
 		    
+			//calculate average bytes per second consumed by transformer 
+			// val duration2 = (System.nanoTime - t2) / 1e9d
+			// total_len= total_len+name.length()+8    //size of string + size of long
+			// println(" Average bytes per second- "+(total_len)/duration2)
+			
 			//schedule a cron_job to decrement topic count after 1 hour
 			var cron_job: Cancellable = null
 		    cron_job = this.context.schedule(1000 * 60 * 60, PunctuationType.WALL_CLOCK_TIME, (timestamp) => {
